@@ -1,4 +1,5 @@
 # Differntial motor controller for esp32 using serial communication
+- Created for using with ROS. but without heavy-weight microROS with the added benefit of being compatible with any ROS version.
 - This is made to read the encoder values from two motors and send over serial while receiving motor target commands from serial.
 - Uses esp32 pulse counter for counting encoder pulses. Right now doesn't support magnetic angle sensors.
 - Implements PID for feedback control.
