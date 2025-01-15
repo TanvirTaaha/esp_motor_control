@@ -1,0 +1,64 @@
+#include "Arduino.h"
+#include "driver/pcnt.h"
+
+// Define encoder pins
+#define LEFT_ENC_A 34
+#define LEFT_ENC_B 35
+#define RIGHT_ENC_A 5
+#define RIGHT_ENC_B 18
+
+void setup_encoder(pcnt_unit_t unit, int pinA, int pinB)
+{
+  // Configure the pulse counter unit
+  pcnt_config_t config = {
+      .pulse_gpio_num = pinA,          // Pin for pulse input
+      .ctrl_gpio_num = pinB,           // Pin for control signal
+      .lctrl_mode = PCNT_MODE_REVERSE, // Reverse count when ctrl is low
+      .hctrl_mode = PCNT_MODE_KEEP,    // Keep count when ctrl is high
+      .pos_mode = PCNT_COUNT_INC,      // Count up on positive edge
+      .neg_mode = PCNT_COUNT_DEC,      // Count down on negative edge
+      .counter_h_lim = 32767,          // Maximum limit
+      .counter_l_lim = -32768,         // Minimum limit
+      .unit = unit,                    // PCNT unit number
+      .channel = PCNT_CHANNEL_0,       // Channel 0
+  };
+
+  // Initialize PCNT unit
+  pcnt_unit_config(&config);
+
+  // Configure the glitch filter
+  pcnt_set_filter_value(unit, 100); // Filter pulses shorter than 100 clock cycles
+  pcnt_filter_enable(unit);
+
+  // Enable counter
+  pcnt_counter_pause(unit);
+  pcnt_counter_clear(unit);
+  pcnt_counter_resume(unit);
+}
+
+void setup()
+{
+  Serial.begin(115200);
+
+  // Setup both encoders
+  setup_encoder(PCNT_UNIT_0, LEFT_ENC_A, LEFT_ENC_B);
+  setup_encoder(PCNT_UNIT_1, RIGHT_ENC_A, RIGHT_ENC_B);
+}
+
+// Function to get encoder count
+int16_t get_encoder_count(pcnt_unit_t unit)
+{
+  int16_t count;
+  pcnt_get_counter_value(unit, &count);
+  return count;
+}
+
+void loop()
+{
+  // Read both encoder counts
+  int16_t left_count = get_encoder_count(PCNT_UNIT_0);
+  int16_t right_count = get_encoder_count(PCNT_UNIT_1);
+
+  Serial.printf("Left: %d, Right: %d\n", left_count, right_count);
+  delay(100);
+}
