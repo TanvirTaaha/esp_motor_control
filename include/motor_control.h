@@ -18,11 +18,12 @@
 #define TIMER_DIVIDER 80                             // Hardware timer clock divider (80MHz/80 = 1MHz)
 #define TIMER_SCALE (TIMER_BASE_CLK / TIMER_DIVIDER) // Convert counter value to seconds
 #define VELOCITY_CALC_FREQ 50.0                      // Hz. Calculate velocity every 50ms
+#define COUNTS_PER_REV 1385                          // uint: ticks
 
 // Delays
-const TickType_t SERIAL_COMM_VTASK_DELAY = 50 / portTICK_PERIOD_MS;
-#define AUTO_STOP_INTERVAL 2000              // unit:ms
-#define TARGET_VELOCITY_UPDATE_INTERVAL 100 // unit:ms
+const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50); // unit:ms
+#define AUTO_STOP_INTERVAL 2000                               // unit:ms
+#define TARGET_VELOCITY_UPDATE_INTERVAL 100                   // unit:ms
 
 // Macro for avoiding overflow/underflow jumps
 // ((diff + L + L / 2) % L) - L / 2 : Where L is the limit
@@ -82,20 +83,31 @@ typedef struct
 } SetPointInfo;
 
 // pid.cpp
+/* PID Parameters */
+extern int8_t kP;
+extern int8_t kD;
+extern int8_t kI;
+extern int8_t kO;
+extern SetPointInfo leftPID, rightPID;
 extern uint8_t moving;
 void resetPID();
 void doPID(SetPointInfo *p);
 void updatePID();
-inline void set_targets(double, double);
+// inline void set_targets(double left_target, double right_target)
+// {
+//     leftPID.target_ticks_per_second = left_target;
+//     rightPID.target_ticks_per_second = right_target;
+// }
 
 // encoder_driver.cpp
+extern volatile double left_ticks_per_sec;
+extern volatile double right_ticks_per_sec;
 void setup_timer();
 void setup_encoder(pcnt_unit_t unit, int pinA, int pinB);
 int16_t get_encoder_count(uint8_t i);
-inline double left_ticks_per_second();
-inline double right_ticks_per_second();
 inline void reset_encoders();
 
+// motor_driver.cpp
 void initMotorDriver();
 void setMotorSpeed(int i, int spd);
 void setMotorSpeeds(int leftSpeed, int rightSpeed);
@@ -106,6 +118,11 @@ void send_data_to_serial();
 void read_data_from_serial();
 void setup_serial();
 
+// ############################### Utility Functions ###################################
+// from: https://stackoverflow.com/a/46963317/8928251
 template <typename T>
-inline T clamp(T val, T lo, T hi);
+inline T clamp(T val, T lo, T hi)
+{
+    return max(lo, min(hi, val));
+}
 #endif

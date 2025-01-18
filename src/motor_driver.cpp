@@ -34,10 +34,3 @@ void setMotorSpeeds(int leftSpeed, int rightSpeed)
     setMotorSpeed(RIGHT, rightSpeed);
 }
 
-// ############################### Utility Functions ###################################
-// from: https://stackoverflow.com/a/46963317/8928251
-template <typename T>
-inline T clamp(T val, T lo, T hi)
-{
-    return max(lo, min(hi, val));
-}

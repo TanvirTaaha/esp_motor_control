@@ -1,13 +1,12 @@
 #include "motor_control.h"
 
-SetPointInfo leftPID, rightPID;
-
 /* PID Parameters */
-int Kp = 20;
-int Kd = 12;
-int Ki = 0;
-int Ko = 50;
+int8_t kP = 20;
+int8_t kD = 12;
+int8_t kI = 0;
+int8_t kO = 50;
 
+SetPointInfo leftPID, rightPID;
 uint8_t moving = 0; // is the base in motion?
 
 /*
@@ -21,13 +20,13 @@ uint8_t moving = 0; // is the base in motion?
 void resetPID()
 {
     leftPID.target_ticks_per_second = 0.0;
-    leftPID.sensor_ticks_per_second = left_ticks_per_second();
+    leftPID.sensor_ticks_per_second = left_ticks_per_sec;
     leftPID.prev_sensor_ticks_per_second = leftPID.sensor_ticks_per_second;
     leftPID.output = 0;
     leftPID.ITerm = 0;
 
     rightPID.target_ticks_per_second = 0.0;
-    rightPID.sensor_ticks_per_second = right_ticks_per_second();
+    rightPID.sensor_ticks_per_second = right_ticks_per_sec;
     rightPID.prev_sensor_ticks_per_second = 0;
     rightPID.output = 0;
     rightPID.ITerm = 0;
@@ -48,7 +47,7 @@ void doPID(SetPointInfo *p)
      * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-tuning-changes/
      */
     // D-term is being subtracted cause it is difference of inputs not the difference of errors
-    output = (Kp * Perror - Kd * (p->sensor_ticks_per_second - p->prev_sensor_ticks_per_second) + p->ITerm) / Ko;
+    output = (kP * Perror - kD * (p->sensor_ticks_per_second - p->prev_sensor_ticks_per_second) + p->ITerm) / kO;
     // output is accumulated. reducing load on kI. reduces overshooting
     output += p->output;
     // Accumulate Integral error *or* Limit output.
@@ -61,7 +60,7 @@ void doPID(SetPointInfo *p)
         /*
          * allow turning changes, see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-tuning-changes/
          */
-        p->ITerm += Ki * Perror;
+        p->ITerm += kI * Perror;
 
     p->output = output;
     p->prev_sensor_ticks_per_second = p->sensor_ticks_per_second;
@@ -71,8 +70,8 @@ void doPID(SetPointInfo *p)
 void updatePID()
 {
     /* Read the encoders */
-    leftPID.sensor_ticks_per_second = left_ticks_per_second();
-    rightPID.sensor_ticks_per_second = right_ticks_per_second();
+    leftPID.sensor_ticks_per_second = left_ticks_per_sec;
+    rightPID.sensor_ticks_per_second = right_ticks_per_sec;
 
     /* If we're not moving there is nothing more to do */
     if (!moving)
@@ -94,10 +93,4 @@ void updatePID()
 
     /* Set the motor speeds accordingly */
     setMotorSpeeds(leftPID.output, rightPID.output);
-}
-
-inline void set_targets(double left_target, double right_target)
-{
-    leftPID.target_ticks_per_second = left_target;
-    rightPID.target_ticks_per_second = right_target;
 }

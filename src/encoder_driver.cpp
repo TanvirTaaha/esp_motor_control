@@ -6,8 +6,8 @@ static int16_t prev_right_count = 0;
 static int16_t current_count;
 
 // Velocities in steps per second
-volatile double _left_ticks_per_sec = 0;
-volatile double _right_ticks_per_sec = 0;
+volatile double left_ticks_per_sec = 0;
+volatile double right_ticks_per_sec = 0;
 
 // Timer interrupt handler
 bool IRAM_ATTR timer_group_isr_callback(void *args)
@@ -17,13 +17,13 @@ bool IRAM_ATTR timer_group_isr_callback(void *args)
     // 2. Calculate velocities (steps per second). Multiply by VELOCITY_CALC_FREQ to convert to per second
     // 3. Store current counts for next calculation
     pcnt_get_counter_value(PCNT_UNIT_0, &current_count);
-    _left_ticks_per_sec = STEPS_DIFF(current_count - prev_left_count) * VELOCITY_CALC_FREQ;
-    // _left_ticks_per_sec = (current_count - prev_left_count) * VELOCITY_CALC_FREQ;
+    left_ticks_per_sec = STEPS_DIFF(current_count - prev_left_count) * VELOCITY_CALC_FREQ;
+    // left_ticks_per_sec = (current_count - prev_left_count) * VELOCITY_CALC_FREQ;
     prev_left_count = current_count;
 
     pcnt_get_counter_value(PCNT_UNIT_1, &current_count);
-    _right_ticks_per_sec = STEPS_DIFF(current_count - prev_right_count) * VELOCITY_CALC_FREQ;
-    // _right_ticks_per_sec = (current_count - prev_right_count) * VELOCITY_CALC_FREQ;
+    right_ticks_per_sec = STEPS_DIFF(current_count - prev_right_count) * VELOCITY_CALC_FREQ;
+    // right_ticks_per_sec = (current_count - prev_right_count) * VELOCITY_CALC_FREQ;
     prev_right_count = current_count;
 
     updatePID();
@@ -112,7 +112,7 @@ int16_t get_encoder_count(uint8_t i)
 // void loop()
 // {
 //     // Print velocities
-//     Serial.printf("Velocities (steps/s) - Left: %.2f, Right: %.2f ", _left_ticks_per_sec, _right_ticks_per_sec);
+//     Serial.printf("Velocities (steps/s) - Left: %.2f, Right: %.2f ", left_ticks_per_sec, right_ticks_per_sec);
 //     // Read both encoder counts
 //     int16_t left_count = get_encoder_count(PCNT_UNIT_0);
 //     int16_t right_count = get_encoder_count(PCNT_UNIT_1);
@@ -121,17 +121,8 @@ int16_t get_encoder_count(uint8_t i)
 //     delay(100); // Update display every 100ms
 // }
 
-inline double left_ticks_per_second()
+void reset_encoders()
 {
-    return _left_ticks_per_sec;
-}
-inline double right_ticks_per_second()
-{
-    return _right_ticks_per_sec;
-}
-
-inline void reset_encoders()
-{
-    _left_ticks_per_sec = 0.0f;
-    _right_ticks_per_sec = 0.0f;
+    left_ticks_per_sec = 0.0f;
+    right_ticks_per_sec = 0.0f;
 }

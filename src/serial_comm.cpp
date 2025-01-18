@@ -18,8 +18,12 @@ void backgroundTask(void *pvParameters)
         // Safely modify shared resource
         if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE)
         {
-            read_data_from_serial();
+            if (Serial.available() > 0)
+            {
+                read_data_from_serial();
+            }
             send_data_to_serial();
+            // Serial.println("from background");
             xSemaphoreGive(mutex);
 
             // Serial.printf("Background task incremented counter to %d on core %d\n",
@@ -31,7 +35,8 @@ void backgroundTask(void *pvParameters)
 
 void send_data_to_serial()
 {
-    String s = String("e_") + String(left_ticks_per_second()) + String("_") + String(right_ticks_per_second());
+    String s = String("e_") + String(left_ticks_per_sec) + String("_") + String(right_ticks_per_sec);
+    // String s = String("e_") + String(get_encoder_count(LEFT)) + String("_") + String(get_encoder_count(RIGHT));
 
     for (int i = 0; i < (MSG_LEN - 1); i++)
     { // MSG_LEN - 1 because there is a trailing newline char
@@ -61,10 +66,33 @@ void read_data_from_serial()
     // Serial.printf("bytes_read:%d. bytes:'%s'\n", bytes_read, receiving_data_buffer);
     if (bytes_read > 0 && bytes_read <= MSG_LEN)
     {
-        if (receiving_data_buffer[0] == 'a')
+        switch (receiving_data_buffer[0])
         {
+        case 'a': // a: (A)utomatic mode
             last_motor_command = millis();
-            sscanf(receiving_data_buffer + 2, "%lf_%lf", &ros_cmd_positions[0], &ros_cmd_positions[1]);
+            // Directly update the target of PID
+            sscanf(receiving_data_buffer + 2, "%lf_%lf", &leftPID.target_ticks_per_second, &rightPID.target_ticks_per_second);
+            break;
+        case 'g': // g: (G)et count
+            Serial.printf("count left%d right:%d\n", get_encoder_count(LEFT), get_encoder_count(RIGHT));
+            break;
+        case 't': // t: get (T)uning parameter
+            Serial.printf("kP:%d,kI:%d,kD:%d,kO:%d", kP, kI, kD, kO);
+            break;
+        case 'p': // p: set (P)roportional gain
+            sscanf(receiving_data_buffer, "_%d", &kP);
+            break;
+        case 'i': // i: set (I)ntregal gain
+            sscanf(receiving_data_buffer, "_%d", &kI);
+            break;
+        case 'd': // d: set (D)ifferential gain
+            sscanf(receiving_data_buffer, "_%d", &kD);
+            break;
+        case 'o': // o: set (O)utput gain
+            sscanf(receiving_data_buffer, "_%d", &kO);
+            break;
+        default:
+            break;
         }
     }
 }
@@ -90,7 +118,7 @@ void setup_serial()
         "SerialCommTask", // Name of the task
         2048,             // Stack size in words
         NULL,             // Task input parameter
-        1,                // Priority of the task
+        2,                // Priority of the task
         NULL,             // Task handle
         0                 // Core to pin the task to (1 for the other core)
     );
