@@ -5,6 +5,8 @@
 #include "driver/pcnt.h"
 #include "driver/timer.h"
 
+#define MOTOR_CONTROL_DEBUG
+
 // Serial params
 #define MSG_LEN 16
 

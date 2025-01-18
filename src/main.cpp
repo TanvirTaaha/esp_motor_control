@@ -30,8 +30,10 @@ void loop()
     auto _millis = millis();
     if ((_millis - last_motor_command) > AUTO_STOP_INTERVAL && (_millis - last_zeroed) > AUTO_STOP_INTERVAL)
     {
+#ifdef MOTOR_CONTROL_DEBUG
         Serial.printf("last_targets: %lf, %lf\n", leftPID.target_ticks_per_second, rightPID.target_ticks_per_second);
         Serial.println("setting motor to zero");
+#endif
         setMotorSpeeds(0, 0);
         moving = 0;
         last_zeroed = _millis;
