@@ -17,7 +17,12 @@
 // Timer configuration
 #define TIMER_DIVIDER 80                             // Hardware timer clock divider (80MHz/80 = 1MHz)
 #define TIMER_SCALE (TIMER_BASE_CLK / TIMER_DIVIDER) // Convert counter value to seconds
-#define VELOCITY_CALC_FREQ 20.0                      // Hz. Calculate velocity every 50ms
+#define VELOCITY_CALC_FREQ 50.0                      // Hz. Calculate velocity every 50ms
+
+// Delays
+const TickType_t SERIAL_COMM_VTASK_DELAY = 50 / portTICK_PERIOD_MS;
+#define AUTO_STOP_INTERVAL 2000              // unit:ms
+#define TARGET_VELOCITY_UPDATE_INTERVAL 100 // unit:ms
 
 // Macro for avoiding overflow/underflow jumps
 // ((diff + L + L / 2) % L) - L / 2 : Where L is the limit
@@ -26,6 +31,8 @@
 
 #define LEFT 0
 #define RIGHT 1
+#define LEFT_ENC_PCNT_UNIT PCNT_UNIT_0
+#define RIGHT_ENC_PCNT_UNIT PCNT_UNIT_1
 /* Maximum PWM signal */
 #define MAX_PWM 1023
 
@@ -47,22 +54,20 @@
 
 extern char sending_data_buffer[MSG_LEN];
 extern char receiving_data_buffer[MSG_LEN];
-extern double ros_cmd_positions[2];    // [left, right]
-extern double velocity_from_sensor[2]; // [left, right]
-extern unsigned long last_heard;
+extern double ros_cmd_positions[2]; // [left, right]
+extern unsigned long last_motor_command;
 
 /* PID setpoint info For a Motor */
 typedef struct
 {
-    double TargetTicksPerFrame; // target speed in ticks per frame
-    long Encoder;               // encoder count
-    long PrevEnc;               // last encoder count
+    double target_ticks_per_second; // target speed in ticks per frame
+    double sensor_ticks_per_second; // encoder count
 
     /*
-     * Using previous input (PrevInput) instead of PrevError to avoid derivative kick,
+     * Using previous input (prev_sensor_ticks_per_second) instead of PrevError to avoid derivative kick,
      * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-derivative-kick/
      */
-    int PrevInput; // last input
+    double prev_sensor_ticks_per_second; // last input
     // int PrevErr;                   // last error
 
     /*
@@ -71,27 +76,35 @@ typedef struct
      * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-tuning-changes/
      */
     // int Ierror;
-    int ITerm; // integrated term
+    double ITerm; // integrated term
 
-    long output; // last motor setting
+    double output; // last motor setting
 } SetPointInfo;
 
+// pid.cpp
+extern uint8_t moving;
 void resetPID();
 void doPID(SetPointInfo *p);
 void updatePID();
+inline void set_targets(double, double);
 
-long readEncoder(int i);
-void resetEncoder(int i);
-void resetEncoders();
+// encoder_driver.cpp
+void setup_timer();
+void setup_encoder(pcnt_unit_t unit, int pinA, int pinB);
+int16_t get_encoder_count(uint8_t i);
+inline double left_ticks_per_second();
+inline double right_ticks_per_second();
+inline void reset_encoders();
 
-void initMotorController();
+void initMotorDriver();
 void setMotorSpeed(int i, int spd);
 void setMotorSpeeds(int leftSpeed, int rightSpeed);
 
 // Serial command functions
 void backgroundTask(void *pvParameters);
-void send_data_to_serial(double *state_positions);
+void send_data_to_serial();
 void read_data_from_serial();
+void setup_serial();
 
 template <typename T>
 inline T clamp(T val, T lo, T hi);

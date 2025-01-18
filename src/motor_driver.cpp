@@ -1,5 +1,5 @@
 #include "motor_control.h"
-void initMotorController()
+void initMotorDriver()
 {
     // Configure PWM channels
     ledcSetup(PWM_LEFT_FWD, MOTOR_FREQ, MOTOR_RES);

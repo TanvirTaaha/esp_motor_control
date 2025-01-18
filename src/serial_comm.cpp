@@ -4,9 +4,8 @@
 char sending_data_buffer[MSG_LEN];
 char receiving_data_buffer[MSG_LEN];
 int bytes_read;
-double ros_cmd_positions[2];    // [left, right]
-double velocity_from_sensor[2]; // [left, right]
-unsigned long last_heard;
+double ros_cmd_positions[2]; // [left, right]
+unsigned long last_motor_command;
 
 // Shared resource with mutex
 SemaphoreHandle_t mutex;
@@ -20,21 +19,19 @@ void backgroundTask(void *pvParameters)
         if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE)
         {
             read_data_from_serial();
-            velocity_from_sensor[0] = readEncoder(LEFT);
-            velocity_from_sensor[0] = readEncoder(RIGHT);
-            send_data_to_serial(velocity_from_sensor);
+            send_data_to_serial();
             xSemaphoreGive(mutex);
-            
+
             // Serial.printf("Background task incremented counter to %d on core %d\n",
             //               sharedCounter, xPortGetCoreID());
         }
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        vTaskDelay(SERIAL_COMM_VTASK_DELAY);
     }
 }
 
-void send_data_to_serial(double *state_positions)
+void send_data_to_serial()
 {
-    String s = String("e_") + String(state_positions[0]) + String("_") + state_positions[1];
+    String s = String("e_") + String(left_ticks_per_second()) + String("_") + String(right_ticks_per_second());
 
     for (int i = 0; i < (MSG_LEN - 1); i++)
     { // MSG_LEN - 1 because there is a trailing newline char
@@ -66,8 +63,44 @@ void read_data_from_serial()
     {
         if (receiving_data_buffer[0] == 'a')
         {
-            last_heard = millis();
+            last_motor_command = millis();
             sscanf(receiving_data_buffer + 2, "%lf_%lf", &ros_cmd_positions[0], &ros_cmd_positions[1]);
         }
+    }
+}
+
+void setup_serial()
+{
+    // Create a mutex
+    mutex = xSemaphoreCreateMutex();
+    if (mutex == NULL)
+    {
+        Serial.println("Failed to create mutex!");
+        while (1)
+            ; // Halt execution
+    }
+    else
+    {
+        Serial.println("Successfully created mutex!");
+    }
+
+    // Create the background task and pin it to core 1
+    BaseType_t result = xTaskCreatePinnedToCore(
+        backgroundTask,   // Function to implement the task
+        "SerialCommTask", // Name of the task
+        2048,             // Stack size in words
+        NULL,             // Task input parameter
+        1,                // Priority of the task
+        NULL,             // Task handle
+        0                 // Core to pin the task to (1 for the other core)
+    );
+
+    if (result != pdPASS)
+    {
+        Serial.println("Failed to create task!");
+    }
+    else
+    {
+        Serial.println("Successfully created task!");
     }
 }
