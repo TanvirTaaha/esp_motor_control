@@ -2,5 +2,7 @@
   "ros.distro": "jazzy",
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
-  "python.defaultInterpreterPath": "/home/taaha/.asdf/shims/python"
+  "python.defaultInterpreterPath": "/home/taaha/.asdf/shims/python",
+  "git.autofetch": "all",
+  "git.autofetchPeriod": 180
 }
