@@ -26,9 +26,8 @@ void setup()
 
 void loop()
 {
-    static auto last_zeroed = 0UL;
     auto _millis = millis();
-    if ((_millis - last_motor_command) > AUTO_STOP_INTERVAL && (_millis - last_zeroed) > AUTO_STOP_INTERVAL)
+    if (!zeroed && (_millis - last_motor_command) > AUTO_STOP_INTERVAL)
     {
 #ifdef MOTOR_CONTROL_DEBUG
         Serial.printf("last_targets: %lf, %lf\n", leftPID.target_ticks_per_second, rightPID.target_ticks_per_second);
@@ -36,7 +35,7 @@ void loop()
 #endif
         setMotorSpeeds(0, 0);
         moving = 0;
-        last_zeroed = _millis;
+        zeroed = true;
     }
     // if (_millis % TARGET_VELOCITY_UPDATE_INTERVAL == 0)
     // {

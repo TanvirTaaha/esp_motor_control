@@ -13,8 +13,8 @@
 // Define encoder pins
 #define LEFT_ENC_A 34
 #define LEFT_ENC_B 35
-#define RIGHT_ENC_A 5
-#define RIGHT_ENC_B 18
+#define RIGHT_ENC_A 26
+#define RIGHT_ENC_B 27
 
 // Timer configuration
 #define TIMER_DIVIDER 80                             // Hardware timer clock divider (80MHz/80 = 1MHz)
@@ -59,6 +59,7 @@ extern char sending_data_buffer[MSG_LEN];
 extern char receiving_data_buffer[MSG_LEN];
 extern double ros_cmd_positions[2]; // [left, right]
 extern unsigned long last_motor_command;
+extern bool zeroed;
 
 /* PID setpoint info For a Motor */
 typedef struct
