@@ -1,6 +1,11 @@
 #include "motor_control.h"
 void initMotorDriver()
 {
+    pinMode(MOTOR_PIN_LEFT_FWD, OUTPUT);
+    pinMode(MOTOR_PIN_LEFT_REV, OUTPUT);
+    pinMode(MOTOR_PIN_RIGHT_FWD, OUTPUT);
+    pinMode(MOTOR_PIN_RIGHT_REV, OUTPUT);
+
     // Configure PWM channels
     ledcSetup(PWM_LEFT_FWD, MOTOR_FREQ, MOTOR_RES);
     ledcSetup(PWM_LEFT_REV, MOTOR_FREQ, MOTOR_RES);
@@ -8,10 +13,10 @@ void initMotorDriver()
     ledcSetup(PWM_RIGHT_REV, MOTOR_FREQ, MOTOR_RES);
 
     // Attach pins to channels
-    ledcAttachPin(MOTOR_LEFT_FWD, PWM_LEFT_FWD);
-    ledcAttachPin(MOTOR_LEFT_REV, PWM_LEFT_REV);
-    ledcAttachPin(MOTOR_RIGHT_FWD, PWM_RIGHT_FWD);
-    ledcAttachPin(MOTOR_RIGHT_REV, PWM_RIGHT_REV);
+    ledcAttachPin(MOTOR_PIN_LEFT_FWD, PWM_LEFT_FWD);
+    ledcAttachPin(MOTOR_PIN_LEFT_REV, PWM_LEFT_REV);
+    ledcAttachPin(MOTOR_PIN_RIGHT_FWD, PWM_RIGHT_FWD);
+    ledcAttachPin(MOTOR_PIN_RIGHT_REV, PWM_RIGHT_REV);
 }
 
 void setMotorSpeed(int idx, int speed)
@@ -30,7 +35,7 @@ void setMotorSpeed(int idx, int speed)
 }
 void setMotorSpeeds(int leftSpeed, int rightSpeed)
 {
+    // LOG_DEBUG("setMotorSpeeds called, left:%d, right:%d", leftSpeed, rightSpeed);
     setMotorSpeed(LEFT, leftSpeed);
     setMotorSpeed(RIGHT, rightSpeed);
 }
-

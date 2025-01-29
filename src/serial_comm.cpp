@@ -6,7 +6,6 @@ char receiving_data_buffer[MSG_LEN];
 int bytes_read;
 double ros_cmd_positions[2]; // [left, right]
 unsigned long last_motor_command;
-bool zeroed = false;
 
 // Shared resource with mutex
 SemaphoreHandle_t mutex;
@@ -71,7 +70,7 @@ void read_data_from_serial()
         {
         case 'a': // a: (A)utomatic mode
             last_motor_command = millis();
-            zeroed = false;
+            should_move = true;
             // Directly update the target of PID
             sscanf(receiving_data_buffer + 2, "%lf_%lf", &leftPID.target_ticks_per_second, &rightPID.target_ticks_per_second);
             break;

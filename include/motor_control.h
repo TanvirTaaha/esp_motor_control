@@ -5,7 +5,8 @@
 #include "driver/pcnt.h"
 #include "driver/timer.h"
 
-#define MOTOR_CONTROL_DEBUG
+#define ACTIVATE_LOGGING 1 // have to be before including debug.h maybe
+#include "debug.h"
 
 // Serial params
 #define MSG_LEN 16
@@ -40,13 +41,13 @@ const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50); // unit:ms
 #define MAX_PWM 1023
 
 // Motor PIN definitions
-#define MOTOR_LEFT_FWD 16  // Left motor forward
-#define MOTOR_LEFT_REV 17  // Left motor reverse
-#define MOTOR_RIGHT_FWD 18 // Right motor forward
-#define MOTOR_RIGHT_REV 19 // Right motor reverse
+#define MOTOR_PIN_LEFT_FWD 16  // Left motor forward
+#define MOTOR_PIN_LEFT_REV 17  // Left motor reverse
+#define MOTOR_PIN_RIGHT_FWD 18 // Right motor forward
+#define MOTOR_PIN_RIGHT_REV 19 // Right motor reverse
 
 // PWM configurations
-#define MOTOR_FREQ 40000 // 20KHz
+#define MOTOR_FREQ 40000 // 40KHz
 #define MOTOR_RES 10     // 10-bit resolution (0-1023)
 
 // PWM channel assignments
@@ -59,7 +60,6 @@ extern char sending_data_buffer[MSG_LEN];
 extern char receiving_data_buffer[MSG_LEN];
 extern double ros_cmd_positions[2]; // [left, right]
 extern unsigned long last_motor_command;
-extern bool zeroed;
 
 /* PID setpoint info For a Motor */
 typedef struct
@@ -92,7 +92,7 @@ extern int8_t kD;
 extern int8_t kI;
 extern int8_t kO;
 extern SetPointInfo leftPID, rightPID;
-extern uint8_t moving;
+extern bool should_move;
 void resetPID();
 void doPID(SetPointInfo *p);
 void updatePID();
