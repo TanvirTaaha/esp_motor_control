@@ -5,11 +5,11 @@
 #include "driver/pcnt.h"
 #include "driver/timer.h"
 
-#define ACTIVATE_LOGGING 1 // have to be before including debug.h maybe
+#define ACTIVATE_LOGGING 1  // have to be before including debug.h maybe
 #include "debug.h"
 
 // Serial params
-#define MSG_LEN 16
+#define MSG_LEN 40  // e_00000.0_00000.0_00000.0_00000.0__\n
 
 // Define encoder pins
 #define LEFT_ENC_A 34
@@ -18,15 +18,15 @@
 #define RIGHT_ENC_B 27
 
 // Timer configuration
-#define TIMER_DIVIDER 80                             // Hardware timer clock divider (80MHz/80 = 1MHz)
-#define TIMER_SCALE (TIMER_BASE_CLK / TIMER_DIVIDER) // Convert counter value to seconds
-#define VELOCITY_CALC_FREQ 50.0                      // Hz. Calculate velocity every 50ms
-#define COUNTS_PER_REV 1385                          // uint: ticks
+#define TIMER_DIVIDER 80                              // Hardware timer clock divider (80MHz/80 = 1MHz)
+#define TIMER_SCALE (TIMER_BASE_CLK / TIMER_DIVIDER)  // Convert counter value to seconds
+#define VELOCITY_CALC_FREQ 50.0                       // Hz. Calculate velocity every 50ms
+#define COUNTS_PER_REV 1385                           // uint: ticks
 
 // Delays
-const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50); // unit:ms
-#define AUTO_STOP_INTERVAL 2000                               // unit:ms
-#define TARGET_VELOCITY_UPDATE_INTERVAL 100                   // unit:ms
+const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50);  // unit:ms
+#define AUTO_STOP_INTERVAL 2000                                // unit:ms
+#define TARGET_VELOCITY_UPDATE_INTERVAL 100                    // unit:ms
 
 // Macro for avoiding overflow/underflow jumps
 // ((diff + L + L / 2) % L) - L / 2 : Where L is the limit
@@ -41,14 +41,14 @@ const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50); // unit:ms
 #define MAX_PWM 1023
 
 // Motor PIN definitions
-#define MOTOR_PIN_LEFT_FWD 16  // Left motor forward
-#define MOTOR_PIN_LEFT_REV 17  // Left motor reverse
-#define MOTOR_PIN_RIGHT_FWD 18 // Right motor forward
-#define MOTOR_PIN_RIGHT_REV 19 // Right motor reverse
+#define MOTOR_PIN_LEFT_FWD 16   // Left motor forward
+#define MOTOR_PIN_LEFT_REV 17   // Left motor reverse
+#define MOTOR_PIN_RIGHT_FWD 18  // Right motor forward
+#define MOTOR_PIN_RIGHT_REV 19  // Right motor reverse
 
 // PWM configurations
-#define MOTOR_FREQ 40000 // 40KHz
-#define MOTOR_RES 10     // 10-bit resolution (0-1023)
+#define MOTOR_FREQ 40000  // 40KHz
+#define MOTOR_RES 10      // 10-bit resolution (0-1023)
 
 // PWM channel assignments
 #define PWM_LEFT_FWD 0
@@ -58,31 +58,31 @@ const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50); // unit:ms
 
 extern char sending_data_buffer[MSG_LEN];
 extern char receiving_data_buffer[MSG_LEN];
-extern double ros_cmd_positions[2]; // [left, right]
+extern double ros_cmd_velocities[2];  // [left, right]
 extern unsigned long last_motor_command;
 
 /* PID setpoint info For a Motor */
 typedef struct
 {
-    double target_ticks_per_second; // target speed in ticks per frame
-    double sensor_ticks_per_second; // encoder count
+  double target_ticks_per_second;  // target speed in ticks per frame
+  double sensor_ticks_per_second;  // encoder count
 
-    /*
-     * Using previous input (prev_sensor_ticks_per_second) instead of PrevError to avoid derivative kick,
-     * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-derivative-kick/
-     */
-    double prev_sensor_ticks_per_second; // last input
-    // int PrevErr;                   // last error
+  /*
+   * Using previous input (prev_sensor_ticks_per_second) instead of PrevError to avoid derivative kick,
+   * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-derivative-kick/
+   */
+  double prev_sensor_ticks_per_second;  // last input
+  // int PrevErr;                   // last error
 
-    /*
-     * Using integrated term (ITerm) instead of integrated error (Ierror),
-     * to allow tuning changes,
-     * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-tuning-changes/
-     */
-    // int Ierror;
-    double ITerm; // integrated term
+  /*
+   * Using integrated term (ITerm) instead of integrated error (Ierror),
+   * to allow tuning changes,
+   * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-tuning-changes/
+   */
+  // int Ierror;
+  double ITerm;  // integrated term
 
-    double output; // last motor setting
+  double output;  // last motor setting
 } SetPointInfo;
 
 // pid.cpp
@@ -124,8 +124,7 @@ void setup_serial();
 // ############################### Utility Functions ###################################
 // from: https://stackoverflow.com/a/46963317/8928251
 template <typename T>
-inline T clamp(T val, T lo, T hi)
-{
-    return max(lo, min(hi, val));
+inline T clamp(T val, T lo, T hi) {
+  return max(lo, min(hi, val));
 }
 #endif

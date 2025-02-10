@@ -4,5 +4,6 @@
   "files.autoSaveDelay": 1000,
   "python.defaultInterpreterPath": "/home/taaha/.asdf/shims/python",
   "git.autofetch": "all",
-  "git.autofetchPeriod": 180
+  "git.autofetchPeriod": 180,
+  "editor.tabSize": 2
 }
