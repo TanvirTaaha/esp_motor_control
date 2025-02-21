@@ -58,20 +58,20 @@ const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50);  // unit:ms
 
 extern char sending_data_buffer[MSG_LEN];
 extern char receiving_data_buffer[MSG_LEN];
-extern double ros_cmd_velocities[2];  // [left, right]
+extern float ros_cmd_velocities[2];  // [left, right]
 extern unsigned long last_motor_command;
 
 /* PID setpoint info For a Motor */
 typedef struct
 {
-  double target_ticks_per_second;  // target speed in ticks per frame
-  double sensor_ticks_per_second;  // encoder count
+  float target_ticks_per_second;  // target speed in ticks per frame
+  float sensor_ticks_per_second;  // encoder count
 
   /*
    * Using previous input (prev_sensor_ticks_per_second) instead of PrevError to avoid derivative kick,
    * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-derivative-kick/
    */
-  double prev_sensor_ticks_per_second;  // last input
+  float prev_sensor_ticks_per_second;  // last input
   // int PrevErr;                   // last error
 
   /*
@@ -80,9 +80,9 @@ typedef struct
    * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-tuning-changes/
    */
   // int Ierror;
-  double ITerm;  // integrated term
+  float ITerm;  // integrated term
 
-  double output;  // last motor setting
+  float output;  // last motor setting
 } SetPointInfo;
 
 // pid.cpp
@@ -96,15 +96,15 @@ extern bool should_move;
 void resetPID();
 void doPID(SetPointInfo *p);
 void updatePID();
-// inline void set_targets(double left_target, double right_target)
+// inline void set_targets(float left_target, float right_target)
 // {
 //     leftPID.target_ticks_per_second = left_target;
 //     rightPID.target_ticks_per_second = right_target;
 // }
 
 // encoder_driver.cpp
-extern volatile double left_ticks_per_sec;
-extern volatile double right_ticks_per_sec;
+extern volatile float left_ticks_per_sec;
+extern volatile float right_ticks_per_sec;
 void setup_timer();
 void setup_encoder(pcnt_unit_t unit, int pinA, int pinB);
 int16_t get_encoder_count(uint8_t i);

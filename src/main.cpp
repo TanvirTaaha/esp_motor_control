@@ -25,7 +25,7 @@ void setup() {
 void loop() {
   auto _millis = millis();
   if (should_move && (_millis - last_motor_command) > AUTO_STOP_INTERVAL) {
-    LOG_DEBUG("last_targets: %lf, %lf", leftPID.target_ticks_per_second, rightPID.target_ticks_per_second);
+    LOG_DEBUG("last_targets: %f, %f", leftPID.target_ticks_per_second, rightPID.target_ticks_per_second);
     LOG_INFO("setting motor to zero");
     setMotorSpeeds(0, 0);
     should_move = false;
