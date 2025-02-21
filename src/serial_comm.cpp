@@ -83,17 +83,14 @@ void read_data_from_serial() {
         kP = val;
         break;
       case 'i':  // i: set (I)ntregal gain
-        int val;
         sscanf(receiving_data_buffer, "i_%d", &val);
         kI = val;
         break;
       case 'd':  // d: set (D)ifferential gain
-        int val;
         sscanf(receiving_data_buffer, "d_%d", &val);
         kD = val;
         break;
       case 'o':  // o: set (O)utput gain
-        int val;
         sscanf(receiving_data_buffer, "o_%d", &val);
         kO = val;
         break;
