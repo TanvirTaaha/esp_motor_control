@@ -75,24 +75,28 @@ void read_data_from_serial() {
         Serial.printf("count left%d right:%d\n", get_encoder_count(LEFT), get_encoder_count(RIGHT));
         break;
       case 't':  // t: get (T)uning parameter
-        Serial.printf("kP:%d,kI:%d,kD:%d,kO:%d", kP, kI, kD, kO);
+        Serial.printf("kP:%d,kI:%d,kD:%d,kO:%d\n", kP, kI, kD, kO);
         break;
       case 'p':  // p: set (P)roportional gain
         int val;
-        sscanf(receiving_data_buffer, "p_%d", &val);
+        sscanf(receiving_data_buffer, "p_%d\n", &val);
         kP = val;
+        eeprom_write_pid_params();
         break;
       case 'i':  // i: set (I)ntregal gain
-        sscanf(receiving_data_buffer, "i_%d", &val);
+        sscanf(receiving_data_buffer, "i_%d\n", &val);
         kI = val;
+        eeprom_write_pid_params();
         break;
       case 'd':  // d: set (D)ifferential gain
-        sscanf(receiving_data_buffer, "d_%d", &val);
+        sscanf(receiving_data_buffer, "d_%d\n", &val);
         kD = val;
+        eeprom_write_pid_params();
         break;
       case 'o':  // o: set (O)utput gain
-        sscanf(receiving_data_buffer, "o_%d", &val);
+        sscanf(receiving_data_buffer, "o_%d\n", &val);
         kO = val;
+        eeprom_write_pid_params();
         break;
       default:
         break;

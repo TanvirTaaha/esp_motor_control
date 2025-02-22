@@ -10,7 +10,7 @@ volatile float left_ticks_per_sec = 0;
 volatile float right_ticks_per_sec = 0;
 
 // Timer interrupt handler
-bool IRAM_ATTR timer_group_isr_callback(void *args) {
+void calc_vel_and_pid_and_write(void *args) {
   // 1. Get current counts
   // 2. Calculate velocities (steps per second). Multiply by VELOCITY_CALC_FREQ to convert to per second
   // 3. Store current counts for next calculation
@@ -25,34 +25,18 @@ bool IRAM_ATTR timer_group_isr_callback(void *args) {
   prev_right_count = current_count;
 
   updatePID();
-
-  return false;  // Keep the watchdog happy
 }
 
 void setup_timer() {
-  timer_config_t config = {
-      .alarm_en = TIMER_ALARM_EN,          // Enable alarm
-      .counter_en = TIMER_START,           // Start immediately
-      .intr_type = TIMER_INTR_LEVEL,       // Interrupt mode
-      .counter_dir = TIMER_COUNT_UP,       // Count up
-      .auto_reload = TIMER_AUTORELOAD_EN,  // Auto-reload on alarm
-      .divider = TIMER_DIVIDER             // Counter clock divider
+  esp_timer_create_args_t timer_args = {
+      .callback = calc_vel_and_pid_and_write,
+      .arg = NULL,
+      .dispatch_method = ESP_TIMER_TASK,
+      .name = "calc_vel_and_pid_and_write",
   };
-
-  // Initialize timer with config
-  timer_init(TIMER_GROUP_0, TIMER_0, &config);
-
-  // Set alarm value (20ms)
-  timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, TIMER_SCALE / VELOCITY_CALC_FREQ);
-
-  // Enable timer interrupt
-  timer_enable_intr(TIMER_GROUP_0, TIMER_0);
-
-  // Register interrupt callback
-  timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, timer_group_isr_callback, NULL, 0);
-
-  // Start timer
-  timer_start(TIMER_GROUP_0, TIMER_0);
+  esp_timer_handle_t timer;
+  esp_timer_create(&timer_args, &timer);
+  esp_timer_start_periodic(timer, TIMER_SCALE / VELOCITY_CALC_FREQ);
 }
 
 void setup_encoder(pcnt_unit_t unit, int pinA, int pinB) {

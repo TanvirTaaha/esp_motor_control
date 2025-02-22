@@ -10,11 +10,12 @@ void setup() {
   // Setup timer for velocity calculation
   setup_timer();
 
-  // setup motor)driver
+  // setup motor_driver
   initMotorDriver();
 
   // Setup PID
-  resetPID();
+  eeprom_setup();  // Have to be called before PID_init()
+  PID_init();
 
   // Setup Serial
   setup_serial();
@@ -27,8 +28,9 @@ void loop() {
   if (should_move && (_millis - last_motor_command) > AUTO_STOP_INTERVAL) {
     LOG_DEBUG("last_targets: %f, %f", leftPID.target_ticks_per_second, rightPID.target_ticks_per_second);
     LOG_INFO("setting motor to zero");
-    setMotorSpeeds(0, 0);
     should_move = false;
+    delay(100);  // Give time for PID to be reset
+    setMotorSpeeds(0, 0);
   }
   // if (_millis % TARGET_VELOCITY_UPDATE_INTERVAL == 0)
   // {

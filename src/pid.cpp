@@ -1,13 +1,31 @@
 #include "motor_control.h"
+/* PID Parameters. Will be initialized from eeprom */
+int16_t kP;
+int16_t kD;
+int16_t kI;
+int16_t kO;
 
-/* PID Parameters */
-int8_t kP = 20;
-int8_t kD = 12;
-int8_t kI = 0;
-int8_t kO = 50;
-
-SetPointInfo leftPID, rightPID;
+volatile SetPointInfo leftPID, rightPID;
 bool should_move = false;  // is the base in motion?
+
+void PID_init() {
+  eeprom_read_pid_params();
+  LOG_DEBUG("retrieved from eeprom: kP:%d, kD:%d, kI:%d, kO:%d", kP, kD, kI, kO);
+  // Set default values for PID parameters if invalid
+  if (isnan(kP) || isnan(kD) || isnan(kI) || isnan(kO) ||
+      isinf(kP) || isinf(kD) || isinf(kI) || isinf(kO) ||
+      kP < 0 || kD < 0 || kI < 0 || kO < 0 ||
+      kP > (1 << 15) || kD > (1 << 15) || kI > (1 << 15) || kO > (1 << 15) ||
+      kP + kD + kI + kO == 0) {
+    kP = 10;
+    kD = 5;
+    kI = 0;
+    kO = 50;
+    eeprom_write_pid_params();
+  }
+  LOG_DEBUG("After checking : kP:%d, kD:%d, kI:%d, kO:%d", kP, kD, kI, kO);
+  resetPID();
+}
 
 /*
  * Initialize PID variables to zero to prevent startup spikes
@@ -32,7 +50,7 @@ void resetPID() {
 }
 
 /* PID routine to compute the next motor commands */
-void doPID(SetPointInfo *p) {
+void doPID(volatile SetPointInfo *p) {
   float Perror;
   float output;
 
@@ -48,7 +66,7 @@ void doPID(SetPointInfo *p) {
   output = (kP * Perror - kD * (p->sensor_ticks_per_second - p->prev_sensor_ticks_per_second) + p->ITerm) / kO;
   // output is accumulated. reducing load on kI. reduces overshooting
   output += p->output;
-
+  LOG_DEBUG("taget:%f, sensor:%f, output:%f, p->output:%f, ITerm:%f, Perror:%f", p->target_ticks_per_second, p->sensor_ticks_per_second, output, p->output, p->ITerm, Perror);
   // Accumulate Integral error *or* Limit output.
   // Stop accumulating when output saturates
   if (output >= MAX_PWM) {
@@ -56,6 +74,7 @@ void doPID(SetPointInfo *p) {
   } else if (output <= -MAX_PWM) {
     output = -MAX_PWM;
   } else {
+    // LOG_DEBUG("Iterm is updating");
     // allow turning changes, see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-tuning-changes/
     p->ITerm += kI * Perror;
   }
@@ -87,6 +106,7 @@ void updatePID() {
   doPID(&rightPID);
   doPID(&leftPID);
   /* Set the motor speeds accordingly */
-  // LOG_DEBUG("leftpid output:%d, right pid output:%d", (int)round(leftPID.output), (int)round(rightPID.output));
-  setMotorSpeeds(round(leftPID.output), round(rightPID.output));
+  int leftSpd = round(leftPID.output), rightSpd = round(rightPID.output);
+  LOG_DEBUG("leftpid output:%d, right pid output:%d", leftSpd, rightSpd);
+  setMotorSpeeds(leftSpd, rightSpd);
 }

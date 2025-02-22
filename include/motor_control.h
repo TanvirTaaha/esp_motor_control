@@ -5,15 +5,19 @@
 #include "driver/pcnt.h"
 #include "driver/timer.h"
 
-#define ACTIVATE_LOGGING 1  // have to be before including debug.h maybe
+// #define ACTIVATE_LOGGING 1  // have to be before including debug.h maybe
 #include "debug.h"
 
 // Serial params
 #define MSG_LEN 40  // e_00000.0_00000.0_00000.0_00000.0__\n
 
+#define LEFT 0
+#define RIGHT 1
+#define LEFT_ENC_PCNT_UNIT PCNT_UNIT_0
+#define RIGHT_ENC_PCNT_UNIT PCNT_UNIT_1
 // Define encoder pins
-#define LEFT_ENC_A 34
-#define LEFT_ENC_B 35
+#define LEFT_ENC_A 13
+#define LEFT_ENC_B 14
 #define RIGHT_ENC_A 26
 #define RIGHT_ENC_B 27
 
@@ -33,28 +37,24 @@ const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50);  // unit:ms
 #define OVERFLOW_LIMIT 32768
 #define STEPS_DIFF(diff) (((diff + ((OVERFLOW_LIMIT) | ((OVERFLOW_LIMIT) >> 1))) % (OVERFLOW_LIMIT)) - ((OVERFLOW_LIMIT) >> 1))
 
-#define LEFT 0
-#define RIGHT 1
-#define LEFT_ENC_PCNT_UNIT PCNT_UNIT_0
-#define RIGHT_ENC_PCNT_UNIT PCNT_UNIT_1
 /* Maximum PWM signal */
 #define MAX_PWM 1023
 
 // Motor PIN definitions
-#define MOTOR_PIN_LEFT_FWD 16   // Left motor forward
-#define MOTOR_PIN_LEFT_REV 17   // Left motor reverse
-#define MOTOR_PIN_RIGHT_FWD 18  // Right motor forward
-#define MOTOR_PIN_RIGHT_REV 19  // Right motor reverse
+#define MOTOR_PIN_LEFT_FWD 18   // Left motor forward
+#define MOTOR_PIN_LEFT_REV 19   // Left motor reverse
+#define MOTOR_PIN_RIGHT_FWD 23  // Right motor forward
+#define MOTOR_PIN_RIGHT_REV 22  // Right motor reverse
 
 // PWM configurations
-#define MOTOR_FREQ 40000  // 40KHz
+#define MOTOR_FREQ 20000  // 40KHz
 #define MOTOR_RES 10      // 10-bit resolution (0-1023)
 
 // PWM channel assignments
-#define PWM_LEFT_FWD 0
-#define PWM_LEFT_REV 1
-#define PWM_RIGHT_FWD 2
-#define PWM_RIGHT_REV 3
+#define PWM_CHANNEL_LEFT_FWD 0
+#define PWM_CHANNEL_LEFT_REV 1
+#define PWM_CHANNEL_RIGHT_FWD 2
+#define PWM_CHANNEL_RIGHT_REV 3
 
 extern char sending_data_buffer[MSG_LEN];
 extern char receiving_data_buffer[MSG_LEN];
@@ -87,14 +87,15 @@ typedef struct
 
 // pid.cpp
 /* PID Parameters */
-extern int8_t kP;
-extern int8_t kD;
-extern int8_t kI;
-extern int8_t kO;
-extern SetPointInfo leftPID, rightPID;
+extern int16_t kP;
+extern int16_t kD;
+extern int16_t kI;
+extern int16_t kO;
+extern volatile SetPointInfo leftPID, rightPID;
 extern bool should_move;
+void PID_init();
 void resetPID();
-void doPID(SetPointInfo *p);
+void doPID(volatile SetPointInfo *p);
 void updatePID();
 // inline void set_targets(float left_target, float right_target)
 // {
@@ -120,6 +121,11 @@ void backgroundTask(void *pvParameters);
 void send_data_to_serial();
 void read_data_from_serial();
 void setup_serial();
+
+// persistence.cpp
+void eeprom_setup();
+void eeprom_write_pid_params();
+void eeprom_read_pid_params();
 
 // ############################### Utility Functions ###################################
 // from: https://stackoverflow.com/a/46963317/8928251
