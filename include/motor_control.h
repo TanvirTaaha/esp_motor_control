@@ -28,7 +28,7 @@
 #define COUNTS_PER_REV 1385                           // uint: ticks
 
 // Delays
-const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50);  // unit:ms
+const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(30);  // unit:ms
 #define AUTO_STOP_INTERVAL 2000                                // unit:ms
 #define TARGET_VELOCITY_UPDATE_INTERVAL 100                    // unit:ms
 
@@ -56,8 +56,8 @@ const TickType_t SERIAL_COMM_VTASK_DELAY = pdMS_TO_TICKS(50);  // unit:ms
 #define PWM_CHANNEL_RIGHT_FWD 2
 #define PWM_CHANNEL_RIGHT_REV 3
 
-extern char sending_data_buffer[MSG_LEN];
-extern char receiving_data_buffer[MSG_LEN];
+extern char sending_data_buffer[MSG_LEN + 1];
+extern char receiving_data_buffer[MSG_LEN + 1];
 extern float ros_cmd_velocities[2];  // [left, right]
 extern unsigned long last_motor_command;
 

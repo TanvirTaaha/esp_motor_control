@@ -1,6 +1,7 @@
 #include "motor_control.h"
 
 void setup() {
+  Serial.setTimeout(SERIAL_COMM_VTASK_DELAY);
   Serial.begin(115200);
   while (!Serial);
 

@@ -44,15 +44,15 @@ void resetPID() {
 
   rightPID.target_ticks_per_second = 0.0;
   rightPID.sensor_ticks_per_second = right_ticks_per_sec;
-  rightPID.prev_sensor_ticks_per_second = 0;
+  rightPID.prev_sensor_ticks_per_second = rightPID.sensor_ticks_per_second;
   rightPID.output = 0;
   rightPID.ITerm = 0;
 }
 
 /* PID routine to compute the next motor commands */
 void doPID(volatile SetPointInfo *p) {
-  float Perror;
-  float output;
+  float Perror = 0.0;
+  float output = 0.0;
 
   // Perror = p->target_ticks_per_second - (p->Encoder - p->PrevEnc);
   Perror = p->target_ticks_per_second - p->sensor_ticks_per_second;
@@ -63,6 +63,7 @@ void doPID(volatile SetPointInfo *p) {
    * see http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-tuning-changes/
    */
   // D-term is being subtracted cause it is difference of inputs not the difference of errors
+  LOG_DEBUG("taget:%f, sensor:%f, output:%f, p->output:%f, ITerm:%f, Perror:%f", p->target_ticks_per_second, p->sensor_ticks_per_second, output, p->output, p->ITerm, Perror);
   output = (kP * Perror - kD * (p->sensor_ticks_per_second - p->prev_sensor_ticks_per_second) + p->ITerm) / kO;
   // output is accumulated. reducing load on kI. reduces overshooting
   output += p->output;
